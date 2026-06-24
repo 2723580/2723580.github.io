@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>陈逸飞 — 高级视频剪辑师</title>
+  <script src="tailwindcss.js"></script>
+  <script src="unpkg.js"></script>
+  <link href="googleapis.css" rel="stylesheet">
+  <link href="googleapis2.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            brand: ['Manrope', 'sans-serif'],
+          },
+          colors: {
+            accent: '#5EA500',
+            'accent-hover': '#4d8a00',
+            surface: {
+              1: '#050505',
+              2: '#080808',
+              3: '#0A0A0A',
+              4: '#0e0e0e',
+              5: '#141414',
+              6: '#1A1A1A',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #050505; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
+    .glass-card { background: rgba(255,255,255,0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+    .glass-high { background: rgba(20,20,20,0.6); backdrop-filter: blur(16px); }
+
+    .text-glow { text-shadow: 0 0 40px rgba(94,165,0,0.3); }
+    .accent-glow { box-shadow: 0 0 60px -20px rgba(94,165,0,0.4); }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes fadeInMove {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .anim-fade-up { opacity: 0; animation: fadeInMove 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .anim-delay-1 { animation-delay: 0.1s; }
+    .anim-delay-2 { animation-delay: 0.2s; }
+    .anim-delay-3 { animation-delay: 0.3s; }
+    .anim-delay-4 { animation-delay: 0.4s; }
+    .anim-delay-5 { animation-delay: 0.5s; }
+    .anim-delay-6 { animation-delay: 0.6s; }
+    .anim-delay-7 { animation-delay: 0.7s; }
+
+    @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .pulse-soft { animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+    .float { animation: float 6s ease-in-out infinite; }
+
+    @keyframes border-glow {
+      0%, 100% { border-color: rgba(94,165,0,0.1); }
+      50% { border-color: rgba(94,165,0,0.3); }
+    }
+    .border-glow { animation: border-glow 3s ease-in-out infinite; }
+
+    @keyframes skill-fill {
+      0% { width: 0%; }
+      100% { width: var(--skill-level); }
+    }
+    .skill-bar-fill { animation: skill-fill 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    .portfolio-item { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .portfolio-item:hover { transform: scale(1.02); }
+    .portfolio-item:hover .portfolio-overlay { opacity: 1; }
+    .portfolio-item:hover .portfolio-img { transform: scale(1.1); }
+    .portfolio-overlay { transition: opacity 0.5s ease; }
+    .portfolio-img { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    .timeline-line { background: linear-gradient(to bottom, transparent, rgba(94,165,0,0.5), transparent); }
+
+    .filter-btn.active { background: rgba(94,165,0,0.15); color: #5EA500; border-color: rgba(94,165,0,0.3); }
+
+    .stat-number { font-variant-numeric: tabular-nums; }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite;
+    }
+
+    .play-btn { transition: all 0.3s ease; }
+    .play-btn:hover { transform: scale(1.15); box-shadow: 0 0 30px rgba(94,165,0,0.5); }
+
+    .tool-icon { transition: all 0.3s ease; }
+    .tool-icon:hover { transform: translateY(-4px); border-color: rgba(94,165,0,0.3); background: rgba(94,165,0,0.05); }
+
+    html { scroll-behavior: smooth; }
+
+    .nav-link { position: relative; }
+    .nav-link::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1px;
+      background: #5EA500; transition: width 0.3s ease;
+    }
+    .nav-link:hover::after { width: 100%; }
+
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 100;
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body class="no-scrollbar">
+
+  <!-- 背景装饰 -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-accent/[0.06] rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-accent/[0.03] rounded-full blur-[100px]"></div>
+    <div class="absolute top-1/2 left-0 w-[300px] h-[300px] bg-purple-500/[0.02] rounded-full blur-[100px]"></div>
+  </div>
+
+  <!-- 导航栏 -->
+  <nav class="fixed top-0 left-0 right-0 z-50 h-16 glass-high border-b border-white/[0.06]">
+    <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+      <a href="#" class="font-brand text-2xl font-semibold tracking-tighter">
+        <span class="text-accent">C</span><span class="text-white">YF</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#about" class="nav-link text-sm text-gray-400 hover:text-white transition-colors duration-200">关于我</a>
+        <a href="#works" class="nav-link text-sm text-gray-400 hover:text-white transition-colors duration-200">作品集</a>
+        <a href="#skills" class="nav-link text-sm text-gray-400 hover:text-white transition-colors duration-200">专业技能</a>
+        <a href="#experience" class="nav-link text-sm text-gray-400 hover:text-white transition-colors duration-200">工作经历</a>
+        <a href="#testimonials" class="nav-link text-sm text-gray-400 hover:text-white transition-colors duration-200">客户评价</a>
+        <a href="#contact" class="ml-4 px-5 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-hover transition-all duration-200 hover:scale-105 active:scale-95" style="box-shadow: 0 0 20px -5px rgba(94,165,0,0.5);">
+          联系我
+        </a>
+      </div>
+      <button id="mobileMenuBtn" class="md:hidden text-gray-400 hover:text-white transition-colors">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 移动端菜单 -->
+  <div id="mobileMenu" class="fixed inset-0 z-40 glass-high hidden flex-col items-center justify-center gap-8" style="background: rgba(5,5,5,0.95);">
+    <button id="mobileMenuClose" class="absolute top-5 right-6 text-gray-400 hover:text-white">
+      <i data-lucide="x" class="w-6 h-6"></i>
+    </button>
+    <a href="#about" class="text-xl text-gray-300 hover:text-white mobile-link">关于我</a>
+    <a href="#works" class="text-xl text-gray-300 hover:text-white mobile-link">作品集</a>
+    <a href="#skills" class="text-xl text-gray-300 hover:text-white mobile-link">专业技能</a>
+    <a href="#experience" class="text-xl text-gray-300 hover:text-white mobile-link">工作经历</a>
+    <a href="#testimonials" class="text-xl text-gray-300 hover:text-white mobile-link">客户评价</a>
+    <a href="#contact" class="text-xl text-accent mobile-link">联系我</a>
+  </div>
+
+  <main class="relative z-10">
+
+    <!-- ===== HERO ===== -->
+    <section class="pt-32 pb-20 lg:pt-48 lg:pb-32 px-6">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <!-- 左侧文字 -->
+          <div>
+            <div class="anim-fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass mb-8">
+              <span class="w-2 h-2 rounded-full bg-accent pulse-soft"></span>
+              <span class="text-xs text-gray-400 font-medium">可接受新项目合作</span>
+            </div>
+
+            <h1 class="anim-fade-up anim-delay-1 font-brand text-5xl md:text-6xl lg:text-7xl font-normal leading-[1.1] tracking-tight mb-6">
+              用剪辑<br>
+              <span class="text-accent text-glow">讲述故事</span>
+            </h1>
+
+            <p class="anim-fade-up anim-delay-2 text-lg lg:text-xl font-light text-gray-400 leading-relaxed mb-8 max-w-lg">
+              8年视频剪辑经验，专注品牌广告、纪录片与短视频内容创作。曾服务超过50个品牌，累计剪辑作品播放量突破5亿次。
+            </p>
+
+            <div class="anim-fade-up anim-delay-3 flex flex-wrap gap-4 mb-10">
+              <a href="#works" class="inline-flex items-center gap-2 px-7 py-3 bg-accent text-white text-base font-medium rounded-xl hover:bg-accent-hover transition-all duration-200 hover:scale-105 active:scale-95 accent-glow">
+                <i data-lucide="play" class="w-4 h-4"></i>
+                查看作品集
+              </a>
+              <a href="#contact" class="inline-flex items-center gap-2 px-7 py-3 glass text-white text-base font-medium rounded-xl hover:bg-white/[0.06] transition-all duration-200 hover:scale-105 active:scale-95">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                下载简历
+              </a>
+            </div>
+
+            <!-- 数据统计 -->
+            <div class="anim-fade-up anim-delay-4 flex gap-8 lg:gap-12">
+              <div>
+                <div class="stat-number text-3xl lg:text-4xl font-light tracking-tight text-white">8<span class="text-accent">+</span></div>
+                <div class="text-xs text-gray-500 mt-1">年从业经验</div>
+              </div>
+              <div>
+                <div class="stat-number text-3xl lg:text-4xl font-light tracking-tight text-white">500<span class="text-accent">+</span></div>
+                <div class="text-xs text-gray-500 mt-1">完成项目</div>
+              </div>
+              <div>
+                <div class="stat-number text-3xl lg:text-4xl font-light tracking-tight text-white">5<span class="text-accent">亿</span></div>
+                <div class="text-xs text-gray-500 mt-1">累计播放量</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧视觉 -->
+          <div class="anim-fade-up anim-delay-3 relative flex justify-center">
+            <div class="relative w-full max-w-md">
+              <!-- 主图 -->
+              <div class="relative rounded-2xl overflow-hidden border border-white/[0.08] float" style="box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 80px -20px rgba(94,165,0,0.15);">
+                <img src="images/banner.jpg" alt="陈逸飞" class="w-full h-auto object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-t from-surface-1 via-transparent to-transparent"></div>
+                <div class="absolute bottom-6 left-6 right-6">
+                  <div class="glass rounded-xl p-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                        <i data-lucide="film" class="w-5 h-5 text-accent"></i>
+                      </div>
+                      <div>
+                        <div class="text-sm font-medium">陈逸飞 / Yifei Chen</div>
+                        <div class="text-xs text-gray-500">高级视频剪辑师 · 调色师</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 浮动标签 -->
+              <div class="absolute -top-4 -right-4 glass rounded-xl px-3 py-2 border-glow" style="animation-delay: 1s;">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="award" class="w-4 h-4 text-accent"></i>
+                  <span class="text-xs font-medium">金投奖 · 最佳剪辑</span>
+                </div>
+              </div>
+              <div class="absolute -bottom-3 -left-3 glass rounded-xl px-3 py-2" style="animation: float 6s ease-in-out 2s infinite;">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="trending-up" class="w-4 h-4 text-green-400"></i>
+                  <span class="text-xs font-medium">98% 客户满意度</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 合作品牌 ===== -->
+    <section class="py-12 px-6 border-y border-white/[0.04]">
+      <div class="max-w-7xl mx-auto">
+        <p class="text-center text-xs text-gray-600 mb-8 tracking-wider uppercase">曾服务品牌</p>
+        <div class="flex flex-wrap items-center justify-center gap-8 md:gap-14 opacity-40">
+          <span class="font-brand text-xl font-semibold tracking-tight">NIKE</span>
+          <span class="font-brand text-xl font-semibold tracking-tight">腾讯</span>
+          <span class="font-brand text-xl font-semibold tracking-tight">字节跳动</span>
+          <span class="font-brand text-xl font-semibold tracking-tight">华为</span>
+          <span class="font-brand text-xl font-semibold tracking-tight">OPPO</span>
+          <span class="font-brand text-xl font-semibold tracking-tight">宝马</span>
+          <span class="font-brand text-xl font-semibold tracking-tight">B站</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 关于我 ===== -->
+    <section id="about" class="py-24 px-6">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-5 gap-12 lg:gap-16">
+          <div class="lg:col-span-2">
+            <div class="sticky top-24">
+              <span class="text-accent text-sm font-medium tracking-wider uppercase">About Me</span>
+              <h2 class="font-brand text-3xl md:text-4xl font-normal tracking-tight mt-3 mb-4">关于我</h2>
+              <div class="w-12 h-0.5 bg-accent/50 rounded-full"></div>
+            </div>
+          </div>
+          <div class="lg:col-span-3 space-y-6">
+            <p class="text-lg font-light text-gray-400 leading-relaxed">
+              我是陈逸飞，一名专注于视觉叙事的视频剪辑师。从2016年入行至今，我始终相信——好的剪辑不仅仅是技术的堆砌，更是对节奏、情感和观众心理的精准把控。
+            </p>
+            <p class="text-lg font-light text-gray-400 leading-relaxed">
+              我曾在北京多家顶级影视制作公司担任高级剪辑师，参与过品牌TVC、纪录片、微电影、综艺后期等多种类型的视频制作。擅长将复杂的素材梳理为流畅、有冲击力的视觉故事。
+            </p>
+            <p class="text-lg font-light text-gray-400 leading-relaxed">
+              目前以自由职业者身份与各大品牌及制作团队深度合作，同时也在B站和小红书分享剪辑教程，积累超过30万粉丝。
+            </p>
+
+            <div class="grid grid-cols-2 gap-4 pt-6">
+              <div class="glass-card rounded-xl p-5">
+                <i data-lucide="map-pin" class="w-5 h-5 text-accent mb-3"></i>
+                <div class="text-sm text-gray-500 mb-1">所在城市</div>
+                <div class="text-sm font-medium">北京 · 朝阳区</div>
+              </div>
+              <div class="glass-card rounded-xl p-5">
+                <i data-lucide="graduation-cap" class="w-5 h-5 text-accent mb-3"></i>
+                <div class="text-sm text-gray-500 mb-1">教育背景</div>
+                <div class="text-sm font-medium">中国传媒大学 · 广播电视编导</div>
+              </div>
+              <div class="glass-card rounded-xl p-5">
+                <i data-lucide="languages" class="w-5 h-5 text-accent mb-3"></i>
+                <div class="text-sm text-gray-500 mb-1">语言能力</div>
+                <div class="text-sm font-medium">中文 · 英文（流利）</div>
+              </div>
+              <div class="glass-card rounded-xl p-5">
+                <i data-lucide="briefcase" class="w-5 h-5 text-accent mb-3"></i>
+                <div class="text-sm text-gray-500 mb-1">当前状态</div>
+                <div class="text-sm font-medium flex items-center gap-2">
+                  自由职业
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500 pulse-soft"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 作品集 ===== -->
+    <section id="works" class="py-24 px-6">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-12">
+          <span class="text-accent text-sm font-medium tracking-wider uppercase">Portfolio</span>
+          <h2 class="font-brand text-3xl md:text-4xl font-normal tracking-tight mt-3 mb-4">精选作品集</h2>
+          <p class="text-gray-500 max-w-xl mx-auto">每一个项目都是一次全新的叙事挑战，以下是我最引以为傲的作品</p>
+        </div>
+
+        <!-- 筛选按钮 -->
+        <div class="flex flex-wrap justify-center gap-3 mb-10">
+          <button class="filter-btn active px-4 py-2 text-sm rounded-lg border border-white/[0.08] transition-all duration-200" data-filter="all">全部作品</button>
+          <button class="filter-btn px-4 py-2 text-sm text-gray-400 rounded-lg border border-white/[0.08] hover:bg-white/[0.04] transition-all duration-200" data-filter="commercial">品牌广告</button>
+          <button class="filter-btn px-4 py-2 text-sm text-gray-400 rounded-lg border border-white/[0.08] hover:bg-white/[0.04] transition-all duration-200" data-filter="documentary">纪录片</button>
+          <button class="filter-btn px-4 py-2 text-sm text-gray-400 rounded-lg border border-white/[0.08] hover:bg-white/[0.04] transition-all duration-200" data-filter="short">短视频</button>
+          <button class="filter-btn px-4 py-2 text-sm text-gray-400 rounded-lg border border-white/[0.08] hover:bg-white/[0.04] transition-all duration-200" data-filter="mv">MV / 微电影</button>
+        </div>
+
+        <!-- 作品网格 -->
+        <div id="portfolioGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+          <!-- 作品1 - 大卡片 -->
+          <!-- <div class="portfolio-item md:col-span-2 lg:col-span-2 rounded-2xl overflow-hidden relative cursor-pointer group" data-category="commercial">
+            <div class="aspect-[16/9] overflow-hidden">
+              <img src="images/1.jpg" alt="NIKE跑鞋TVC" class="portfolio-img w-full h-full object-cover" />
+            </div>
+            <div class="portfolio-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 flex flex-col justify-end p-6 md:p-8">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="px-2 py-0.5 text-[10px] rounded bg-accent/20 text-accent font-medium">品牌广告</span>
+                <span class="px-2 py-0.5 text-[10px] rounded bg-white/10 text-gray-300 font-medium">TVC</span>
+              </div>
+              <h3 class="font-brand text-xl md:text-2xl font-medium tracking-tight mb-2">NIKE「破风而行」TVC</h3>
+              <p class="text-sm text-gray-400 mb-4 max-w-lg">为Nike新款跑鞋打造的60秒品牌广告，通过高速运动的视觉语言与精准的节奏剪辑，传递突破极限的品牌精神。全网上线首周播放量突破3000万。</p>
+              <div class="flex items-center gap-6 text-xs text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="eye" class="w-3.5 h-3.5"></i> 3000万+播放</span>
+                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> 60秒</span>
+                <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> 2024</span>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn w-16 h-16 rounded-full bg-accent/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="play" class="w-6 h-6 text-white ml-1"></i>
+            </div>
+          </div> -->
+
+          <!-- 作品2 -->
+          <div class="portfolio-item rounded-2xl overflow-hidden relative cursor-pointer group" data-category="documentary">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src="images/2.jpg" alt="纪录片" class="portfolio-img w-full h-full object-cover" />
+            </div>
+            <div class="portfolio-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 flex flex-col justify-end p-5">
+              <span class="px-2 py-0.5 text-[10px] rounded bg-accent/20 text-accent font-medium w-fit mb-2">纪录片</span>
+              <h3 class="font-brand text-lg font-medium tracking-tight mb-1">《极境》· 冰川纪实</h3>
+              <p class="text-xs text-gray-400 mb-3">历时45天在青藏高原拍摄的环保纪录片，呈现冰川消融的真实面貌。</p>
+              <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="award" class="w-3 h-3"></i> 入围翠贝卡电影节</span>
+                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 42分钟</span>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn w-12 h-12 rounded-full bg-accent/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>
+            </div>
+          </div>
+
+          <div class="portfolio-item rounded-2xl overflow-hidden relative cursor-pointer group" data-category="documentary">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src="images/2.jpg" alt="纪录片" class="portfolio-img w-full h-full object-cover" />
+            </div>
+            <div class="portfolio-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 flex flex-col justify-end p-5">
+              <span class="px-2 py-0.5 text-[10px] rounded bg-accent/20 text-accent font-medium w-fit mb-2">纪录片</span>
+              <h3 class="font-brand text-lg font-medium tracking-tight mb-1">《极境》· 冰川纪实</h3>
+              <p class="text-xs text-gray-400 mb-3">历时45天在青藏高原拍摄的环保纪录片，呈现冰川消融的真实面貌。</p>
+              <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="award" class="w-3 h-3"></i> 入围翠贝卡电影节</span>
+                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 42分钟</span>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn w-12 h-12 rounded-full bg-accent/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>
+            </div>
+          </div>
+
+          <!-- 作品3 -->
+          <div class="portfolio-item rounded-2xl overflow-hidden relative cursor-pointer group" data-category="short">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src="images/3.jpg" alt="美食短视频" class="portfolio-img w-full h-full object-cover" />
+            </div>
+            <div class="portfolio-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 flex flex-col justify-end p-5">
+              <span class="px-2 py-0.5 text-[10px] rounded bg-accent/20 text-accent font-medium w-fit mb-2">短视频</span>
+              <h3 class="font-brand text-lg font-medium tracking-tight mb-1">「深夜食堂」系列</h3>
+              <p class="text-xs text-gray-400 mb-3">为某美食品牌打造短视频系列，单条最高播放量2200万，系列总播放超2亿。</p>
+              <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> 2亿+播放</span>
+                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 60秒/条</span>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn w-12 h-12 rounded-full bg-accent/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>
+            </div>
+          </div>
+
+          <!-- 作品4 -->
+          <div class="portfolio-item rounded-2xl overflow-hidden relative cursor-pointer group" data-category="mv">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src="images/4.jpg" alt="MV" class="portfolio-img w-full h-full object-cover" />
+            </div>
+            <div class="portfolio-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 flex flex-col justify-end p-5">
+              <span class="px-2 py-0.5 text-[10px] rounded bg-accent/20 text-accent font-medium w-fit mb-2">MV</span>
+              <h3 class="font-brand text-lg font-medium tracking-tight mb-1">《霓虹深渊》MV</h3>
+              <p class="text-xs text-gray-400 mb-3">独立乐队单曲MV，赛博朋克视觉风格，获B站音乐区周榜TOP3。</p>
+              <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> 580万播放</span>
+                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 4分12秒</span>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn w-12 h-12 rounded-full bg-accent/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>
+            </div>
+          </div>
+
+          <!-- 作品5 -->
+          <div class="portfolio-item rounded-2xl overflow-hidden relative cursor-pointer group" data-category="commercial">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src="images/5.jpg" alt="华为广告" class="portfolio-img w-full h-full object-cover" />
+            </div>
+            <div class="portfolio-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 flex flex-col justify-end p-5">
+              <span class="px-2 py-0.5 text-[10px] rounded bg-accent/20 text-accent font-medium w-fit mb-2">品牌广告</span>
+              <h3 class="font-brand text-lg font-medium tracking-tight mb-1">华为 Mate60 产品片</h3>
+              <p class="text-xs text-gray-400 mb-3">手机摄影能力展示广告片，通过真实用户拍摄素材的节奏化剪辑呈现产品力。</p>
+              <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> 1500万播放</span>
+                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 30秒</span>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn w-12 h-12 rounded-full bg-accent/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>
+            </div>
+          </div>
+
+          <!-- 作品6 -->
+          <div class="portfolio-item rounded-2xl overflow-hidden relative cursor-pointer group" data-category="short">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img src="images/6.jpg" alt="旅行短片" class="portfolio-img w-full h-full object-cover" />
+            </div>
+            <div class="portfolio-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 flex flex-col justify-end p-5">
+              <span class="px-2 py-0.5 text-[10px] rounded bg-accent/20 text-accent font-medium w-fit mb-2">短视频</span>
+              <h3 class="font-brand text-lg font-medium tracking-tight mb-1">「城市脉搏」旅行Vlog</h3>
+              <p class="text-xs text-gray-400 mb-3">个人IP系列短片，以电影感手法记录城市人文，小红书单篇笔记互动破10万。</p>
+              <div class="flex items-center gap-4 text-[11px] text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3"></i> 10万+互动</span>
+                <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> 90秒/条</span>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 play-btn w-12 h-12 rounded-full bg-accent/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 专业技能 ===== -->
+    <section id="skills" class="py-24 px-6 border-t border-white/[0.04]">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <span class="text-accent text-sm font-medium tracking-wider uppercase">Skills</span>
+          <h2 class="font-brand text-3xl md:text-4xl font-normal tracking-tight mt-3 mb-4">专业技能</h2>
+          <p class="text-gray-500 max-w-xl mx-auto">从创意构思到最终交付，掌握完整视频制作链路</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- 剪辑能力 -->
+          <div class="glass-card rounded-2xl p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <i data-lucide="scissors" class="w-5 h-5 text-accent"></i>
+              </div>
+              <h3 class="font-brand text-lg font-medium">剪辑与叙事</h3>
+            </div>
+            <div class="space-y-5">
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">叙事节奏把控</span><span class="text-accent">97%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 97%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">多机位剪辑</span><span class="text-accent">95%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 95%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">情绪节奏设计</span><span class="text-accent">93%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 93%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">音画同步与声音设计</span><span class="text-accent">90%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 90%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 调色与视觉 -->
+          <div class="glass-card rounded-2xl p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <i data-lucide="palette" class="w-5 h-5 text-accent"></i>
+              </div>
+              <h3 class="font-brand text-lg font-medium">调色与视觉</h3>
+            </div>
+            <div class="space-y-5">
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">DaVinci Resolve 调色</span><span class="text-accent">95%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 95%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">色彩情绪表达</span><span class="text-accent">92%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 92%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">LUT 创建与管理</span><span class="text-accent">88%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 88%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">HDR 调色流程</span><span class="text-accent">85%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 85%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 特效与动效 -->
+          <div class="glass-card rounded-2xl p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-5 h-5 text-accent"></i>
+              </div>
+              <h3 class="font-brand text-lg font-medium">特效与动效</h3>
+            </div>
+            <div class="space-y-5">
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">After Effects 合成</span><span class="text-accent">88%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 88%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">文字动效设计</span><span class="text-accent">90%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 90%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">转场设计</span><span class="text-accent">92%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 92%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">粒子与光效</span><span class="text-accent">78%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 78%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 工作流与管理 -->
+          <div class="glass-card rounded-2xl p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                <i data-lucide="workflow" class="w-5 h-5 text-accent"></i>
+              </div>
+              <h3 class="font-brand text-lg font-medium">工作流与项目管理</h3>
+            </div>
+            <div class="space-y-5">
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">DIT 与素材管理</span><span class="text-accent">95%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 95%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">多人协作流程</span><span class="text-accent">90%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 90%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">代理与高效剪辑</span><span class="text-accent">96%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 96%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">交付标准把控</span><span class="text-accent">98%</span></div>
+                <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden"><div class="skill-bar-fill h-full bg-gradient-to-r from-accent to-green-400 rounded-full" style="--skill-level: 98%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 工具栈 -->
+        <div class="mt-12">
+          <h3 class="text-center text-sm text-gray-500 mb-6 tracking-wider uppercase">常用工具</h3>
+          <div class="flex flex-wrap justify-center gap-4">
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="film" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">Premiere Pro</span>
+            </div>
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="palette" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">DaVinci Resolve</span>
+            </div>
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="sparkles" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">After Effects</span>
+            </div>
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="box" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">Cinema 4D</span>
+            </div>
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="music" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">Audition</span>
+            </div>
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="image" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">Photoshop</span>
+            </div>
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="layout-grid" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">Figma</span>
+            </div>
+            <div class="tool-icon glass-card rounded-xl px-5 py-3 flex items-center gap-3 cursor-default">
+              <i data-lucide="hard-drive" class="w-5 h-5 text-accent"></i>
+              <span class="text-sm font-medium">Frame.io</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 工作经历 ===== -->
+    <section id="experience" class="py-24 px-6 border-t border-white/[0.04]">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <span class="text-accent text-sm font-medium tracking-wider uppercase">Experience</span>
+          <h2 class="font-brand text-3xl md:text-4xl font-normal tracking-tight mt-3 mb-4">工作经历</h2>
+          <p class="text-gray-500 max-w-xl mx-auto">从制作助理到独立剪辑师，每一步都在打磨手艺</p>
+        </div>
+
+        <div class="relative max-w-3xl mx-auto">
+          <!-- 时间线 -->
+          <div class="absolute left-[19px] md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5 timeline-line"></div>
+
+          <!-- 经历1 -->
+          <div class="relative flex flex-col md:flex-row md:justify-between mb-12 pl-12 md:pl-0">
+            <div class="md:w-[45%] md:text-right md:pr-10">
+              <span class="text-accent text-sm font-medium">2022 — 至今</span>
+              <h3 class="font-brand text-xl font-medium mt-1">独立视频剪辑师</h3>
+              <p class="text-sm text-gray-500 mt-1">自由职业</p>
+            </div>
+            <div class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-1 w-10 h-10 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center z-10">
+              <i data-lucide="star" class="w-4 h-4 text-accent"></i>
+            </div>
+            <div class="md:w-[45%] md:pl-10 mt-3 md:mt-0">
+              <div class="glass-card rounded-xl p-5">
+                <p class="text-sm text-gray-400 leading-relaxed">以自由职业者身份服务NIKE、华为、OPPO等头部品牌，同时运营个人自媒体账号（B站30万粉、小红书15万粉），承接品牌TVC、纪录片、短视频等全类型项目。</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">品牌广告</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">自媒体</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">纪录片</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 经历2 -->
+          <div class="relative flex flex-col md:flex-row md:justify-between mb-12 pl-12 md:pl-0">
+            <div class="md:w-[45%] md:text-right md:pr-10">
+              <span class="text-accent text-sm font-medium">2020 — 2022</span>
+              <h3 class="font-brand text-xl font-medium mt-1">高级剪辑师</h3>
+              <p class="text-sm text-gray-500 mt-1">北京光年映像文化传媒</p>
+            </div>
+            <div class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-1 w-10 h-10 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center z-10">
+              <i data-lucide="clapperboard" class="w-4 h-4 text-gray-400"></i>
+            </div>
+            <div class="md:w-[45%] md:pl-10 mt-3 md:mt-0">
+              <div class="glass-card rounded-xl p-5">
+                <p class="text-sm text-gray-400 leading-relaxed">负责公司核心项目的剪辑与调色工作，主导完成华为、腾讯等品牌广告项目20余个。搭建公司标准化后期工作流，将项目交付效率提升40%。</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">TVC</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">调色</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">流程优化</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 经历3 -->
+          <div class="relative flex flex-col md:flex-row md:justify-between mb-12 pl-12 md:pl-0">
+            <div class="md:w-[45%] md:text-right md:pr-10">
+              <span class="text-accent text-sm font-medium">2018 — 2020</span>
+              <h3 class="font-brand text-xl font-medium mt-1">剪辑师</h3>
+              <p class="text-sm text-gray-500 mt-1">北京新片场影业</p>
+            </div>
+            <div class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-1 w-10 h-10 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center z-10">
+              <i data-lucide="film" class="w-4 h-4 text-gray-400"></i>
+            </div>
+            <div class="md:w-[45%] md:pl-10 mt-3 md:mt-0">
+              <div class="glass-card rounded-xl p-5">
+                <p class="text-sm text-gray-400 leading-relaxed">参与微电影、网剧和品牌片剪辑，独立完成《极境》纪录片剪辑（入围翠贝卡电影节）。在此期间系统学习了DaVinci Resolve调色体系。</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">微电影</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">纪录片</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">网剧</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 经历4 -->
+          <div class="relative flex flex-col md:flex-row md:justify-between pl-12 md:pl-0">
+            <div class="md:w-[45%] md:text-right md:pr-10">
+              <span class="text-accent text-sm font-medium">2016 — 2018</span>
+              <h3 class="font-brand text-xl font-medium mt-1">后期制作助理</h3>
+              <p class="text-sm text-gray-500 mt-1">北京央视纪录频道</p>
+            </div>
+            <div class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-1 w-10 h-10 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center z-10">
+              <i data-lucide="play-circle" class="w-4 h-4 text-gray-400"></i>
+            </div>
+            <div class="md:w-[45%] md:pl-10 mt-3 md:mt-0">
+              <div class="glass-card rounded-xl p-5">
+                <p class="text-sm text-gray-400 leading-relaxed">在央视纪录频道实习并转正，参与《航拍中国》《舌尖上的中国》等节目的辅助剪辑工作，打下了扎实的纪录片剪辑基础。</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">纪录片</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.05] text-gray-400">电视节目</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 客户评价 ===== -->
+    <section id="testimonials" class="py-24 px-6 border-t border-white/[0.04]">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <span class="text-accent text-sm font-medium tracking-wider uppercase">Testimonials</span>
+          <h2 class="font-brand text-3xl md:text-4xl font-normal tracking-tight mt-3 mb-4">客户评价</h2>
+          <p class="text-gray-500 max-w-xl mx-auto">合作过的客户怎么说</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="glass-card rounded-2xl p-6 hover:border-white/10 transition-all duration-300">
+            <div class="flex gap-1 mb-4">
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed mb-6">"逸飞对节奏的感知力是我合作过的剪辑师中最出色的。他把我们原本平淡的素材剪出了一部大片的感觉，最终成片超出了所有人的预期。"</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-surface-6 flex items-center justify-center text-sm font-medium text-accent">王</div>
+              <div>
+                <div class="text-sm font-medium">王明哲</div>
+                <div class="text-xs text-gray-500">NIKE大中华区创意总监</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-6 hover:border-white/10 transition-all duration-300">
+            <div class="flex gap-1 mb-4">
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed mb-6">"和逸飞合作纪录片《极境》是一段非常愉快的经历。他对素材的梳理能力极强，能在海量素材中精准找到最有张力的片段。影片入围翠贝卡，他功不可没。"</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-surface-6 flex items-center justify-center text-sm font-medium text-accent">李</div>
+              <div>
+                <div class="text-sm font-medium">李思远</div>
+                <div class="text-xs text-gray-500">独立纪录片导演</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl p-6 hover:border-white/10 transition-all duration-300">
+            <div class="flex gap-1 mb-4">
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+              <i data-lucide="star" class="w-4 h-4 text-accent fill-accent"></i>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed mb-6">"我们的美食短视频系列在逸飞接手后，完播率直接翻了一倍。他太懂短视频的节奏了，每个镜头的停留时间都恰到好处。已经连续合作两年了。"</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-surface-6 flex items-center justify-center text-sm font-medium text-accent">张</div>
+              <div>
+                <div class="text-sm font-medium">张晓萌</div>
+                <div class="text-xs text-gray-500">「深夜食堂」品牌方运营总监</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 荣誉奖项 ===== -->
+    <section class="py-24 px-6 border-t border-white/[0.04]">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <span class="text-accent text-sm font-medium tracking-wider uppercase">Awards</span>
+          <h2 class="font-brand text-3xl md:text-4xl font-normal tracking-tight mt-3 mb-4">荣誉与认可</h2>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="glass-card rounded-2xl p-6 text-center group hover:border-accent/20 transition-all duration-300">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+              <i data-lucide="trophy" class="w-7 h-7 text-accent"></i>
+            </div>
+            <h4 class="font-brand text-sm font-medium mb-1">金投奖</h4>
+            <p class="text-xs text-gray-500">最佳商业广告剪辑 · 2023</p>
+          </div>
+          <div class="glass-card rounded-2xl p-6 text-center group hover:border-accent/20 transition-all duration-300">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+              <i data-lucide="globe" class="w-7 h-7 text-accent"></i>
+            </div>
+            <h4 class="font-brand text-sm font-medium mb-1">翠贝卡电影节</h4>
+            <p class="text-xs text-gray-500">纪录片单元入围 · 2021</p>
+          </div>
+          <div class="glass-card rounded-2xl p-6 text-center group hover:border-accent/20 transition-all duration-300">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+              <i data-lucide="crown" class="w-7 h-7 text-accent"></i>
+            </div>
+            <h4 class="font-brand text-sm font-medium mb-1">B站创作之星</h4>
+            <p class="text-xs text-gray-500">年度最佳知识区UP主 · 2023</p>
+          </div>
+          <div class="glass-card rounded-2xl p-6 text-center group hover:border-accent/20 transition-all duration-300">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+              <i data-lucide="medal" class="w-7 h-7 text-accent"></i>
+            </div>
+            <h4 class="font-brand text-sm font-medium mb-1">中国广告节</h4>
+            <p class="text-xs text-gray-500">银奖 · 短视频类 · 2022</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 联系我 ===== -->
+    <section id="contact" class="py-24 px-6 border-t border-white/[0.04]">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20">
+          <div>
+            <span class="text-accent text-sm font-medium tracking-wider uppercase">Contact</span>
+            <h2 class="font-brand text-3xl md:text-4xl font-normal tracking-tight mt-3 mb-6">开始合作</h2>
+            <p class="text-lg font-light text-gray-400 leading-relaxed mb-10 max-w-md">
+              无论你是品牌方、制作公司还是独立创作者，如果你需要一个能把素材变成好故事的剪辑师，欢迎随时联系我。
+            </p>
+
+            <div class="space-y-5">
+              <a href="mailto:yifei@example.com" class="flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl glass flex items-center justify-center group-hover:border-accent/20 transition-all duration-300">
+                  <i data-lucide="mail" class="w-5 h-5 text-gray-400 group-hover:text-accent transition-colors"></i>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500 mb-0.5">邮箱</div>
+                  <div class="text-sm font-medium group-hover:text-accent transition-colors">yifei@example.com</div>
+                </div>
+              </a>
+              <a href="tel:+8613800001234" class="flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl glass flex items-center justify-center group-hover:border-accent/20 transition-all duration-300">
+                  <i data-lucide="phone" class="w-5 h-5 text-gray-400 group-hover:text-accent transition-colors"></i>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500 mb-0.5">电话</div>
+                  <div class="text-sm font-medium group-hover:text-accent transition-colors">138-0000-1234</div>
+                </div>
+              </a>
+              <a href="#" class="flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl glass flex items-center justify-center group-hover:border-accent/20 transition-all duration-300">
+                  <i data-lucide="message-circle" class="w-5 h-5 text-gray-400 group-hover:text-accent transition-colors"></i>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500 mb-0.5">微信</div>
+                  <div class="text-sm font-medium group-hover:text-accent transition-colors">Yifei_Chen_Edit</div>
+                </div>
+              </a>
+            </div>
+
+            <!-- 社交链接 -->
+            <div class="flex gap-3 mt-10">
+              <a href="#" class="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-500 hover:text-accent hover:border-accent/20 transition-all duration-200">
+                <i data-lucide="tv" class="w-4 h-4"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-500 hover:text-accent hover:border-accent/20 transition-all duration-200">
+                <i data-lucide="bookmark" class="w-4 h-4"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-500 hover:text-accent hover:border-accent/20 transition-all duration-200">
+                <i data-lucide="video" class="w-4 h-4"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-500 hover:text-accent hover:border-accent/20 transition-all duration-200">
+                <i data-lucide="instagram" class="w-4 h-4"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- 联系表单 -->
+          <div class="glass-card rounded-2xl p-6 md:p-8">
+            <h3 class="font-brand text-lg font-medium mb-6">发送消息</h3>
+            <form id="contactForm" class="space-y-5">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs text-gray-500 mb-1.5 block">姓名 *</label>
+                  <input type="text" required placeholder="你的姓名" class="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent/30 transition-colors" />
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 mb-1.5 block">公司</label>
+                  <input type="text" placeholder="公司名称" class="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent/30 transition-colors" />
+                </div>
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 mb-1.5 block">邮箱 *</label>
+                <input type="email" required placeholder="your@email.com" class="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent/30 transition-colors" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 mb-1.5 block">项目类型</label>
+                <select class="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-4 py-3 text-sm text-gray-400 focus:outline-none focus:border-accent/30 transition-colors appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22><path d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat: no-repeat; background-position: right 12px center;">
+                  <option value="">请选择项目类型</option>
+                  <option value="tvc">品牌TVC广告</option>
+                  <option value="documentary">纪录片</option>
+                  <option value="short">短视频 / 社媒内容</option>
+                  <option value="mv">MV / 微电影</option>
+                  <option value="corporate">企业宣传片</option>
+                  <option value="other">其他</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 mb-1.5 block">预算范围</label>
+                <select class="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-4 py-3 text-sm text-gray-400 focus:outline-none focus:border-accent/30 transition-colors appearance-none cursor-pointer" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22><path d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat: no-repeat; background-position: right 12px center;">
+                  <option value="">请选择预算范围</option>
+                  <option value="1">5,000 以下</option>
+                  <option value="2">5,000 - 20,000</option>
+                  <option value="3">20,000 - 50,000</option>
+                  <option value="4">50,000 - 100,000</option>
+                  <option value="5">100,000 以上</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 mb-1.5 block">项目描述 *</label>
+                <textarea required rows="4" placeholder="简单描述你的项目需求、时长、交付时间等..." class="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent/30 transition-colors resize-none"></textarea>
+              </div>
+              <button type="submit" class="w-full py-3.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-hover transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] accent-glow flex items-center justify-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                发送消息
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/[0.04] py-8 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-brand text-lg font-semibold tracking-tighter"><span class="text-accent">C</span>YF</span>
+        <span class="text-xs text-gray-600">© 2024 陈逸飞. All rights reserved.</span>
+      </div>
+      <div class="flex items-center gap-6 text-xs text-gray-600">
+        <a href="#" class="hover:text-gray-400 transition-colors">B站</a>
+        <a href="#" class="hover:text-gray-400 transition-colors">小红书</a>
+        <a href="#" class="hover:text-gray-400 transition-colors">抖音</a>
+        <a href="#" class="hover:text-gray-400 transition-colors">新片场</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast 通知 -->
+  <div id="toast" class="toast glass-high rounded-xl px-5 py-4 flex items-center gap-3 border border-accent/20">
+    <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+      <i data-lucide="check" class="w-4 h-4 text-accent"></i>
+    </div>
+    <div>
+      <div class="text-sm font-medium">消息已发送</div>
+      <div class="text-xs text-gray-500">我会在24小时内回复你</div>
+    </div>
+  </div>
+
+  <script>
+    // 初始化 Lucide 图标
+    lucide.createIcons();
+
+    // 移动端菜单
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileMenuClose = document.getElementById('mobileMenuClose');
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.remove('hidden');
+      mobileMenu.classList.add('flex');
+    });
+    mobileMenuClose.addEventListener('click', () => {
+      mobileMenu.classList.add('hidden');
+      mobileMenu.classList.remove('flex');
+    });
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenu.classList.remove('flex');
+      });
+    });
+
+    // 作品筛选
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter;
+
+        portfolioItems.forEach(item => {
+          if (filter === 'all' || item.dataset.category === filter) {
+            item.style.display = '';
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.95)';
+            requestAnimationFrame(() => {
+              item.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+              item.style.opacity = '1';
+              item.style.transform = 'scale(1)';
+            });
+          } else {
+            item.style.transition = 'all 0.3s ease';
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.95)';
+            setTimeout(() => { item.style.display = 'none'; }, 300);
+          }
+        });
+      });
+    });
+
+    // 联系表单
+    const contactForm = document.getElementById('contactForm');
+    const toast = document.getElementById('toast');
+
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      toast.classList.add('show');
+      contactForm.reset();
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    });
+
+    // 滚动动画
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.glass-card, .portfolio-item, .tool-icon').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+      observer.observe(el);
+    });
+
+    // 导航栏滚动效果
+    const nav = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        nav.style.borderBottomColor = 'rgba(255,255,255,0.08)';
+      } else {
+        nav.style.borderBottomColor = 'rgba(255,255,255,0.04)';
+      }
+    });
+
+    // 技能条动画 - 当可见时触发
+    const skillBars = document.querySelectorAll('.skill-bar-fill');
+    const skillObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          skillObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    skillBars.forEach(bar => {
+      bar.style.animationPlayState = 'paused';
+      skillObserver.observe(bar);
+    });
+  </script>
+
+</body>
+</html>
